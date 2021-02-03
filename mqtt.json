@@ -1,0 +1,132 @@
+{
+  "attributeUpdates": [
+    {
+      "attributeFilter": "uploadFrequency",
+      "deviceNameFilter": "SmartMeter.*",
+      "topicExpression": "sensor/${deviceName}/${attributeKey}",
+      "valueExpression": "{\"${attributeKey}\":\"${attributeValue}\"}"
+    }
+  ],
+  "broker": {
+    "host": "39.105.185.205",
+    "name": "Default Local Broker",
+    "port": 1883,
+    "security": {
+      "password": "password",
+      "type": "basic",
+      "username": "user"
+    }
+  },
+  "connectRequests": [
+    {
+      "deviceNameJsonExpression": "${SerialNumber}",
+      "topicFilter": "sensor/connect"
+    },
+    {
+      "deviceNameTopicExpression": "(?<=sensor/)(.*?)(?=/connect)",
+      "topicFilter": "sensor/+/connect"
+    }
+  ],
+  "disconnectRequests": [
+    {
+      "deviceNameJsonExpression": "${SerialNumber}",
+      "topicFilter": "sensor/disconnect"
+    },
+    {
+      "deviceNameTopicExpression": "(?<=sensor/)(.*?)(?=/disconnect)",
+      "topicFilter": "sensor/+/disconnect"
+    }
+  ],
+  "mapping": [
+    {
+      "converter": {
+        "attributes": [
+          {
+            "key": "model",
+            "type": "string",
+            "value": "${sensorModel}"
+          },
+          {
+            "key": "${sensorModel}",
+            "type": "string",
+            "value": "on"
+          }
+        ],
+        "deviceNameJsonExpression": "${serialNumber}",
+        "deviceTypeJsonExpression": "${sensorType}",
+        "timeout": 60000,
+        "timeseries": [
+          {
+            "key": "fireStatus",
+            "type": "double",
+            "value": "${fire}"
+          },
+          {
+            "key": "humidity",
+            "type": "double",
+            "value": "${hum}"
+          }
+        ],
+        "type": "json"
+      },
+      "topicFilter": "/sensor/data/esp8266_fire"
+    },
+    {
+      "converter": {
+        "attributes": [
+          {
+            "key": "model",
+            "type": "string",
+            "value": "${sensorModel}"
+          }
+        ],
+        "deviceNameTopicExpression": "(?<=sensor/)(.*?)(?=/data)",
+        "deviceTypeTopicExpression": "Thermometer",
+        "timeout": 60000,
+        "timeseries": [
+          {
+            "key": "temperature",
+            "type": "double",
+            "value": "${temp}"
+          },
+          {
+            "key": "humidity",
+            "type": "double",
+            "value": "${hum}"
+          }
+        ],
+        "type": "json"
+      },
+      "topicFilter": "/sensor/+/data"
+    },
+    {
+      "converter": {
+        "extension": "CustomMqttUplinkConverter",
+        "extension-config": {
+          "batteryLevelBytes": 1,
+          "humidityBytes": 2,
+          "temperatureBytes": 2
+        },
+        "type": "custom"
+      },
+      "topicFilter": "/custom/sensors/+"
+    }
+  ],
+  "name": "MQTT",
+  "serverSideRpc": [
+    {
+      "deviceNameFilter": ".*",
+      "methodFilter": "echoEsp8266",
+      "requestTopicExpression": "sensor/${deviceName}/request/${methodName}/${requestId}",
+      "responseTimeout": 10000,
+      "responseTopicExpression": "sensor/${deviceName}/response/${methodName}/${requestId}",
+      "valueExpression": "${params}"
+    },
+    {
+      "deviceNameFilter": ".*",
+      "methodFilter": "no-reply",
+      "requestTopicExpression": "sensor/${deviceName}/request/${methodName}/${requestId}",
+      "valueExpression": "${params}"
+    }
+  ]
+}
